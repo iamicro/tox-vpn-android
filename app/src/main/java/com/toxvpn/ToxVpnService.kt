@@ -123,7 +123,7 @@ class ToxVpnService : VpnService(), CoreCallbackHandler {
             try {
                 core?.startLoop(
                     config,
-                    tun.fd.toLong()
+                    tun.fd
                 )
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -155,21 +155,15 @@ class ToxVpnService : VpnService(), CoreCallbackHandler {
         return super.onBind(intent)
     }
 
-    override fun startup(): Int {
-        return 0
+    override fun startup(): Long {
+        return 0L
     }
 
-    override fun shutdown(): Int {
-        return 0
+    override fun shutdown(): Long {
+        return 0L
     }
 
-    override fun onEmitStatus(
-        status: Int,
-        message: String
-    ): Int {
-        return 0
-    }
-
+   
     private fun createNotificationChannel() {
 
         if (Build.VERSION.SDK_INT >= 26) {
