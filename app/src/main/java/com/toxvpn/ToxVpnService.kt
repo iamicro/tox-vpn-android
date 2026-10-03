@@ -163,7 +163,7 @@ class ToxVpnService : VpnService(), CoreCallbackHandler {
 
                 Log.d(
                     "TOX_XRAY",
-                    "Starting Xray with TUN fd=${tun.fd}"
+                  "Starting Xray with TUN fd=${tun.fd}, core=${core != null}"
                 )
 
                 core?.startLoop(
