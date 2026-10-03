@@ -126,7 +126,7 @@ class ToxVpnService : VpnService(), CoreCallbackHandler {
                     tun.fd
                 )
             } catch (e: Exception) {
-                e.printStackTrace()
+                android.util.Log.e("TOX_XRAY", "Xray failed", e)
                 stopSelf()
             }
         }.start()
