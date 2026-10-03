@@ -13,7 +13,7 @@ import libv2ray.CoreCallbackHandler
 import libv2ray.CoreController
 import libv2ray.Libv2ray
 
-class ToxVpnService : VpnService(), {
+class ToxVpnService : VpnService(), CoreCallbackHandler {
 
     private var vpnInterface: android.os.ParcelFileDescriptor? = null
     private var core: CoreController? = null
