@@ -191,7 +191,7 @@ class ToxVpnService : VpnService(), CoreCallbackHandler {
 
     override fun onDestroy() {
 
-        Log.d("TOX_XRAY", "Stopping VPN")
+        Log.d("TOX_XRAY", "Stopping VPN - onDestroy called")
 
         try {
             core?.stopLoop()
