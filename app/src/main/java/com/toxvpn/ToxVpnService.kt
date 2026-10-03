@@ -13,7 +13,7 @@ import libv2ray.CoreCallbackHandler
 import libv2ray.CoreController
 import libv2ray.Libv2ray
 
-class ToxVpnService : VpnService(), CoreCallbackHandler {
+class ToxVpnService : VpnService(), {
 
     private var vpnInterface: android.os.ParcelFileDescriptor? = null
     private var core: CoreController? = null
@@ -155,15 +155,6 @@ class ToxVpnService : VpnService(), CoreCallbackHandler {
         return super.onBind(intent)
     }
 
-    override fun startup(): Long {
-        return 0L
-    }
-
-    override fun shutdown(): Long {
-        return 0L
-    }
-
-   
     private fun createNotificationChannel() {
 
         if (Build.VERSION.SDK_INT >= 26) {
