@@ -4,10 +4,10 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Intent
-import android.content.pm.ServiceInfo
 import android.net.VpnService
 import android.os.Build
 import android.os.IBinder
+import android.util.Log
 import go.Seq
 import libv2ray.CoreCallbackHandler
 import libv2ray.CoreController
@@ -21,18 +21,32 @@ class ToxVpnService : VpnService(), CoreCallbackHandler {
     private val config = """
     {
       "log": {
-        "loglevel": "warning"
+        "loglevel": "debug"
       },
-      "inbounds": [],
+
+      "inbounds": [
+        {
+          "tag": "tun-in",
+          "port": 0,
+          "protocol": "tun",
+          "settings": {
+            "name": "tun0",
+            "MTU": 1500
+          }
+        }
+      ],
+
       "outbounds": [
         {
           "tag": "proxy",
           "protocol": "vless",
+
           "settings": {
             "vnext": [
               {
                 "address": "178.105.153.241",
                 "port": 443,
+
                 "users": [
                   {
                     "id": "aac775af-932d-4714-bee4-38635ab5ec5c",
@@ -42,9 +56,11 @@ class ToxVpnService : VpnService(), CoreCallbackHandler {
               }
             ]
           },
+
           "streamSettings": {
             "network": "tcp",
             "security": "reality",
+
             "realitySettings": {
               "serverName": "amzn.com",
               "fingerprint": "chrome",
@@ -54,7 +70,20 @@ class ToxVpnService : VpnService(), CoreCallbackHandler {
             }
           }
         }
-      ]
+      ],
+
+      "routing": {
+        "domainStrategy": "AsIs",
+        "rules": [
+          {
+            "type": "field",
+            "inboundTag": [
+              "tun-in"
+            ],
+            "outboundTag": "proxy"
+          }
+        ]
+      }
     }
     """.trimIndent()
 
@@ -80,7 +109,7 @@ class ToxVpnService : VpnService(), CoreCallbackHandler {
             startForeground(
                 1,
                 notification,
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+                android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
             )
         } else {
             startForeground(1, notification)
@@ -104,7 +133,10 @@ class ToxVpnService : VpnService(), CoreCallbackHandler {
 
     private fun startVpn() {
 
-        vpnInterface?.close()
+        try {
+            vpnInterface?.close()
+        } catch (_: Exception) {
+        }
 
         vpnInterface = Builder()
             .setSession("TOX VPN")
@@ -115,28 +147,56 @@ class ToxVpnService : VpnService(), CoreCallbackHandler {
             .addDnsServer("8.8.8.8")
             .establish()
 
-        val tun = vpnInterface ?: return
+        val tun = vpnInterface
+
+        if (tun == null) {
+            Log.e("TOX_XRAY", "Failed to establish VPN interface")
+            stopSelf()
+            return
+        }
 
         core = Libv2ray.newCoreController(this)
 
         Thread {
+
             try {
+
+                Log.d(
+                    "TOX_XRAY",
+                    "Starting Xray with TUN fd=${tun.fd}"
+                )
+
                 core?.startLoop(
                     config,
                     tun.fd
                 )
+
+                Log.d(
+                    "TOX_XRAY",
+                    "Xray startLoop returned successfully"
+                )
+
             } catch (e: Exception) {
-                android.util.Log.e("TOX_XRAY", "Xray failed", e)
+                Log.e(
+                    "TOX_XRAY",
+                    "Xray failed to start",
+                    e
+                )
+
                 stopSelf()
             }
+
         }.start()
     }
 
     override fun onDestroy() {
 
+        Log.d("TOX_XRAY", "Stopping VPN")
+
         try {
             core?.stopLoop()
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.e("TOX_XRAY", "Core stop error", e)
         }
 
         core = null
@@ -156,28 +216,42 @@ class ToxVpnService : VpnService(), CoreCallbackHandler {
     }
 
     override fun startup(): Long {
+        Log.d("TOX_XRAY", "Xray started")
         return 0L
     }
 
     override fun shutdown(): Long {
+        Log.d("TOX_XRAY", "Xray stopped")
         return 0L
     }
 
-    override fun onEmitStatus(l: Long, s: String?): Long {
+    override fun onEmitStatus(
+        l: Long,
+        s: String?
+    ): Long {
+
+        Log.d(
+            "TOX_XRAY",
+            "Status: $s"
+        )
+
         return 0L
     }
 
     private fun createNotificationChannel() {
 
-        if (Build.VERSION.SDK_INT >= 26) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+
             val channel = NotificationChannel(
                 "tox_vpn",
                 "TOX VPN",
                 NotificationManager.IMPORTANCE_LOW
             )
 
-            getSystemService(NotificationManager::class.java)
-                .createNotificationChannel(channel)
+            val manager =
+                getSystemService(NotificationManager::class.java)
+
+            manager.createNotificationChannel(channel)
         }
     }
 }
