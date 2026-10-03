@@ -25,6 +25,12 @@ jobs:
         with:
           gradle-version: '8.10.2'
 
+      - name: Download Xray library
+        run: |
+          mkdir -p app/libs
+          curl -fL -o app/libs/libv2ray.aar \
+            https://github.com/2dust/AndroidLibXrayLite/releases/download/v26.9.30/libv2ray.aar
+            
       - name: Build APK
         run: gradle assembleDebug
 
