@@ -155,6 +155,18 @@ class ToxVpnService : VpnService(), CoreCallbackHandler {
         return super.onBind(intent)
     }
 
+    override fun startup(): Long {
+        return 0L
+    }
+
+    override fun shutdown(): Long {
+        return 0L
+    }
+
+    override fun onEmitStatus(l: Long, s: String?): Long {
+        return 0L
+    }
+
     private fun createNotificationChannel() {
 
         if (Build.VERSION.SDK_INT >= 26) {
